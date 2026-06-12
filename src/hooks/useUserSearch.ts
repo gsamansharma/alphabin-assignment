@@ -45,10 +45,11 @@ export function useUserSearch({ limit }: UseUserSearchProps) {
           setTotal(data.total);
           setQueryTimeMs(data.queryTimeMs);
         }
-      } catch (err: any) {
+      } catch (err) {
         if (active) {
           console.error(err);
-          setError(err.message || 'Something went wrong while fetching data.');
+          const message = err instanceof Error ? err.message : 'Something went wrong while fetching data.';
+          setError(message);
         }
       } finally {
         if (active) {

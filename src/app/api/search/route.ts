@@ -82,10 +82,11 @@ export async function GET(request: NextRequest) {
       total,
       queryTimeMs,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Search API error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: message },
       { status: 500 }
     );
   }
