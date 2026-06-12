@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+interface DBUser {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Measure query execution time
     const start = performance.now();
 
-    let dbUsers = [];
+    let dbUsers: DBUser[] = [];
     let total = 0;
 
     if (terms.length > 0) {
