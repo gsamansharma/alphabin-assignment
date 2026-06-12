@@ -1,65 +1,108 @@
-import Image from "next/image";
+'use client';
+
+import { Card, Button, InputGroup, Alert } from '@heroui/react';
+import { useUserSearch } from '@/hooks/useUserSearch';
+import { UserCard } from '@/components/UserCard';
+import { SkeletonGrid } from '@/components/SkeletonGrid';
+import { PaginationControl } from '@/components/PaginationControl';
+import { SearchStats } from '@/components/SearchStats';
 
 export default function Home() {
+  const limit = 12;
+  const {
+    query,
+    setQuery,
+    users,
+    total,
+    queryTimeMs,
+    isLoading,
+    page,
+    setPage,
+    error,
+  } = useUserSearch({ limit });
+
+  const totalPages = Math.ceil(total / limit);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-zinc-800 selection:text-white pb-24">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24">
+        
+        <div className="mb-10 space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-100">
+            User Search Directory
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-sm text-zinc-400 max-w-xl">
+            Search across 10,500+ registered profiles. Powered by Prisma and optimized with PostgreSQL GIN indexes.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        <Card className="border border-zinc-800 bg-zinc-950/40 p-5 rounded-xl space-y-4 mb-8">
+          <InputGroup className="w-full bg-zinc-900 border border-zinc-800 focus-within:border-zinc-500 rounded-lg h-11 flex items-center px-3 gap-2">
+            <svg className="w-4 h-4 text-zinc-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <InputGroup.Input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="bg-transparent border-none text-zinc-100 placeholder-zinc-600 focus:outline-none text-sm w-full h-full"
+              placeholder="Search by name..."
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors focus:outline-none cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </InputGroup>
+
+          <SearchStats total={total} queryTimeMs={queryTimeMs} />
+        </Card>
+
+        {error && (
+          <Alert className="border border-red-900/50 bg-red-950/20 text-red-200 rounded-xl p-4 mb-8">
+            <Alert.Content>
+              <Alert.Title className="font-semibold text-red-400">Database Connection Failed</Alert.Title>
+              <Alert.Description className="mt-1 text-red-400/90 leading-relaxed block">
+                {error}. Please check your configuration.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert>
+        )}
+
+        {isLoading ? (
+          <SkeletonGrid limit={limit} />
+        ) : users.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {users.map((user) => (
+              <UserCard key={user.id} user={user} />
+            ))}
+          </div>
+        ) : (
+          <Card className="max-w-xl mx-auto border border-dashed border-zinc-800 bg-zinc-950/20 p-16 text-center space-y-3 rounded-xl shadow-none">
+            <h3 className="text-sm font-semibold text-zinc-200">No users found</h3>
+            <p className="text-xs text-zinc-500 max-w-xs mx-auto leading-normal">
+              We couldn&apos;t find any user profile matching your query.
+            </p>
+            {query && (
+              <div className="pt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setQuery('')}
+                  className="text-xs bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100"
+                >
+                  Clear Search Filter
+                </Button>
+              </div>
+            )}
+          </Card>
+        )}
+
+        <PaginationControl page={page} totalPages={totalPages} onPageChange={setPage} />
+      </div>
     </div>
   );
 }
